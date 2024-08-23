@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r127/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.127/examples/js/controls/OrbitControls.js"></script>
+    <script>
+      // ページの読み込みを待つ
+      window.addEventListener("load", init);
+
+      function init() {
+        // サイズを指定
+        const width = 960;
+        const height = 540;
+
+        // レンダラーを作成
+        const renderer = new THREE.WebGLRenderer({
+          canvas: document.querySelector("#myCanvas"),
+        });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          width / height,
+          1,
+          10000
+        );
+        camera.position.set(0, 0, 800);
+
+        // カメラコントロールを追加（マウスで操作可能にする）
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
+
+        // 環境光を作成
+        const ambientLight = new THREE.AmbientLight(0x666666); // 明るさを強める
+        scene.add(ambientLight);
+
+        // 平行光源を作成
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // 光源の強度を強める
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
+
+        // 青い地球を作成
+        const earthGeometry = new THREE.SphereGeometry(300, 50, 50);
+        const earthMaterial = new THREE.MeshStandardMaterial({
+          color: 0x0000ff, // 青色に設定
+          metalness: 0.3,
+          roughness: 0.7,
+        });
+        const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+        scene.add(earthMesh);
+
+        // 雲を作成
+        const cloudGeometry = new THREE.SphereGeometry(305, 50, 50);
+        const cloudMaterial = new THREE.MeshStandardMaterial({
+          map: new THREE.TextureLoader().load("img/earth_clouds.png"),
+          transparent: true,
+        });
+        const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        scene.add(cloudMesh);
+
+        // 星空の背景を作成
+        createStarField();
+
+        /** 星屑を作成します */
+        function createStarField() {
+          const starGeometry = new THREE.BufferGeometry();
+          const starMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+          const starVertices = [];
+
+          for (let i = 0; i < 10000; i++) {
+            const x = 5000 * (Math.random() - 0.5);
+            const y = 5000 * (Math.random() - 0.5);
+            const z = 5000 * (Math.random() - 0.5);
+            starVertices.push(x, y, z);
+          }
+
+          starGeometry.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(starVertices, 3)
+          );
+          const stars = new THREE.Points(starGeometry, starMaterial);
+          scene.add(stars);
+        }
+
+        function tick() {
+          // 地球を回転させる
+          earthMesh.rotation.y += 0.001;
+          cloudMesh.rotation.y += 0.0012;
+
+          // カメラコントロールの更新
+          controls.update();
+
+          // レンダリング
+          renderer.render(scene, camera);
+
+          requestAnimationFrame(tick);
+        }
+
+        tick();
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="myCanvas"></canvas>
+  </body>
+</html>
